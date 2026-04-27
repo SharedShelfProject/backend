@@ -1,17 +1,11 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
+import { BookStatus } from '../../common/enums';
 import { BaseEntity } from './base.entity';
 import { BorrowRequest } from './borrow-request.entity';
 import { GroupBook } from './group-book.entity';
 import { Loan } from './loan.entity';
 import { User } from './user.entity';
-
-export enum BookStatus {
-  AVAILABLE = 'available',
-  QUEUED = 'queued',
-  BORROWED = 'borrowed',
-  UNAVAILABLE = 'unavailable',
-}
 
 @Entity({ name: 'books' })
 export class Book extends BaseEntity {

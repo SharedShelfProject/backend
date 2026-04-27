@@ -1,15 +1,11 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
+import { GroupVisibility } from '../../common/enums';
 import { BaseEntity } from './base.entity';
 import { GroupBook } from './group-book.entity';
 import { GroupMembership } from './group-membership.entity';
 import { Loan } from './loan.entity';
 import { User } from './user.entity';
-
-export enum GroupVisibility {
-  OPEN = 'open',
-  PRIVATE = 'private',
-}
 
 @Entity({ name: 'groups' })
 export class Group extends BaseEntity {

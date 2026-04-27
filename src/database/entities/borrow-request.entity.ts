@@ -1,18 +1,10 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
+import { BorrowRequestStatus } from '../../common/enums';
 import { BaseEntity } from './base.entity';
 import { Book } from './book.entity';
 import { GroupBook } from './group-book.entity';
 import { User } from './user.entity';
-
-export enum BorrowRequestStatus {
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  CANCELLED = 'cancelled',
-  EXPIRED = 'expired',
-  FULFILLED = 'fulfilled',
-}
 
 @Entity({ name: 'borrow_requests' })
 export class BorrowRequest extends BaseEntity {

@@ -6,21 +6,10 @@ import {
   Unique,
 } from 'typeorm';
 
+import { GroupMemberRole, GroupMemberStatus } from '../../common/enums';
 import { BaseEntity } from './base.entity';
 import { Group } from './group.entity';
 import { User } from './user.entity';
-
-export enum GroupMemberRole {
-  OWNER = 'owner',
-  ADMIN = 'admin',
-  MEMBER = 'member',
-}
-
-export enum GroupMemberStatus {
-  PENDING = 'pending',
-  ACTIVE = 'active',
-  BLOCKED = 'blocked',
-}
 
 @Entity({ name: 'group_memberships' })
 @Unique('UQ_group_membership_group_user', ['group', 'user'])

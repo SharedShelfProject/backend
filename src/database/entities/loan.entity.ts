@@ -1,18 +1,12 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
+import { LoanStatus } from '../../common/enums';
 import { BaseEntity } from './base.entity';
 import { Book } from './book.entity';
 import { Group } from './group.entity';
 import { Notification } from './notification.entity';
 import { ReputationReview } from './reputation-review.entity';
 import { User } from './user.entity';
-
-export enum LoanStatus {
-  ACTIVE = 'active',
-  RETURNED = 'returned',
-  OVERDUE = 'overdue',
-  LOST = 'lost',
-}
 
 @Entity({ name: 'loans' })
 export class Loan extends BaseEntity {
