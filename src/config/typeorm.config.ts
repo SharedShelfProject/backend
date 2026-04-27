@@ -9,6 +9,7 @@ import { GroupBook } from '../database/entities/group-book.entity';
 import { GroupMembership } from '../database/entities/group-membership.entity';
 import { Loan } from '../database/entities/loan.entity';
 import { Notification } from '../database/entities/notification.entity';
+import { RefreshToken } from '../database/entities/refresh-token.entity';
 import { ReputationReview } from '../database/entities/reputation-review.entity';
 import { User } from '../database/entities/user.entity';
 import { BorrowRequest } from '../database/entities/borrow-request.entity';
@@ -23,16 +24,17 @@ const entities = [
   Loan,
   Notification,
   ReputationReview,
+  RefreshToken,
 ];
 
 function createBaseOptions(): TypeOrmModuleOptions & DataSourceOptions {
   return {
     type: 'postgres',
-    host: process.env.DB_HOST ?? 'localhost',
-    port: Number.parseInt(process.env.DB_PORT ?? '5432', 10),
-    username: process.env.DB_USERNAME ?? 'postgres',
-    password: process.env.DB_PASSWORD ?? 'postgres',
-    database: process.env.DB_NAME ?? 'shared_shelf',
+    host: process.env.DB_HOST,
+    port: Number.parseInt(process.env.DB_PORT!, 10),
+    username: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
     entities,
     synchronize: false,
   };
@@ -43,16 +45,17 @@ export function createTypeOrmOptions(): TypeOrmModuleOptions {
 }
 
 export function createDataSourceOptions(): DataSourceOptions {
+  const isProd = process.env.NODE_ENV === 'production';
   return {
     ...createBaseOptions(),
-    migrations: ['src/database/migrations/*.ts'],
+    migrations: [
+      isProd
+        ? 'dist/database/migrations/*.js'
+        : 'src/database/migrations/*.ts',
+    ],
   };
 }
 
-export const typeOrmModuleOptions: TypeOrmModuleOptions = createTypeOrmOptions();
-
-export const dataSourceOptions: DataSourceOptions = createDataSourceOptions();
-
-const dataSource = new DataSource(dataSourceOptions);
+const dataSource = new DataSource(createDataSourceOptions());
 
 export default dataSource;
