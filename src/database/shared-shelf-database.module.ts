@@ -8,7 +8,6 @@ import { GroupMembership } from './entities/group-membership.entity';
 import { Group } from './entities/group.entity';
 import { Loan } from './entities/loan.entity';
 import { Notification } from './entities/notification.entity';
-import { RefreshToken } from './entities/refresh-token.entity';
 import { ReputationReview } from './entities/reputation-review.entity';
 import { User } from './entities/user.entity';
 
@@ -24,7 +23,6 @@ import { User } from './entities/user.entity';
       Loan,
       Notification,
       ReputationReview,
-      RefreshToken,
     ]),
   ],
   exports: [TypeOrmModule],

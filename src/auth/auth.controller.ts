@@ -9,7 +9,6 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
 
@@ -31,23 +30,5 @@ export class AuthController {
   @ApiResponse({ status: 200, type: TokenResponseDto })
   login(@Body() dto: LoginDto): Promise<TokenResponseDto> {
     return this.authService.login(dto);
-  }
-
-  @Post('refresh')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Refresh access token' })
-  @ApiResponse({ status: 200, type: TokenResponseDto })
-  async refresh(@Body() dto: RefreshTokenDto): Promise<TokenResponseDto> {
-    const rawToken = this.authService.extractRawRefreshToken(dto.refreshToken);
-    return this.authService.refresh(rawToken);
-  }
-
-  @Post('logout')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Logout (revoke refresh token)' })
-  @ApiResponse({ status: 204 })
-  async logout(@Body() dto: RefreshTokenDto): Promise<void> {
-    const rawToken = this.authService.extractRawRefreshToken(dto.refreshToken);
-    return this.authService.logout(rawToken);
   }
 }

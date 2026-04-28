@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { RefreshToken } from '../database/entities/refresh-token.entity';
 import { User } from '../database/entities/user.entity';
 import { PublicUserProfileDto, UserProfileDto } from './dto/user-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -12,8 +11,6 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @InjectRepository(RefreshToken)
-    private readonly refreshTokenRepository: Repository<RefreshToken>,
   ) {}
 
   async getOwnProfile(userId: string): Promise<UserProfileDto> {
@@ -46,7 +43,6 @@ export class UsersService {
     const user = await this.findActiveUser(userId);
     user.isActive = false;
     await this.userRepository.save(user);
-    await this.refreshTokenRepository.delete({ userId });
   }
 
   private async findActiveUser(userId: string): Promise<User> {
