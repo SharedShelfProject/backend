@@ -7,10 +7,16 @@ import {
   HttpStatus,
   Param,
   Patch,
+  Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -19,7 +25,9 @@ import {
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UploadAvatarDto } from './dto/upload-avatar.dto';
 import { PublicUserProfileDto, UserProfileDto } from './dto/user-profile.dto';
+import { multerOptions } from './multer.config';
 import { UsersService } from './users.service';
 
 @ApiTags('users')
@@ -46,6 +54,21 @@ export class UsersController {
     @Body() dto: UpdateProfileDto,
   ): Promise<UserProfileDto> {
     return this.usersService.updateProfile(user.id, dto);
+  }
+
+  @Post('me/avatar')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @UseInterceptors(FileInterceptor('file', multerOptions))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: UploadAvatarDto })
+  @ApiOperation({ summary: 'Upload own avatar' })
+  @ApiResponse({ status: 201, type: UserProfileDto })
+  uploadAvatar(
+    @CurrentUser() user: { id: string },
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<UserProfileDto> {
+    return this.usersService.updateAvatar(user.id, file.filename);
   }
 
   @Delete('me')

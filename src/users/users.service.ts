@@ -39,6 +39,13 @@ export class UsersService {
     return publicProfile;
   }
 
+  async updateAvatar(userId: string, filename: string): Promise<UserProfileDto> {
+    const user = await this.findActiveUser(userId);
+    user.avatarUrl = '/uploads/' + filename;
+    await this.userRepository.save(user);
+    return this.toProfileDto(user);
+  }
+
   async softDelete(userId: string): Promise<void> {
     const user = await this.findActiveUser(userId);
     user.isActive = false;
