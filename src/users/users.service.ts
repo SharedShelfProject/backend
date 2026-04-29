@@ -27,7 +27,6 @@ export class UsersService {
     if (dto.firstName !== undefined) user.firstName = dto.firstName;
     if (dto.lastName !== undefined) user.lastName = dto.lastName;
     if (dto.bio !== undefined) user.bio = dto.bio;
-    if (dto.avatarUrl !== undefined) user.avatarUrl = dto.avatarUrl;
 
     await this.userRepository.save(user);
     return this.toProfileDto(user);
