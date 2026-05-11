@@ -35,6 +35,12 @@ export class BorrowRequest extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   message: string | null;
 
+  @Column({ name: 'approved_due_at', type: 'timestamptz', nullable: true })
+  approvedDueAt: Date | null;
+
+  @Column({ name: 'approval_notes', type: 'text', nullable: true })
+  approvalNotes: string | null;
+
   @Column({ name: 'requested_at', type: 'timestamptz', default: () => 'NOW()' })
   requestedAt: Date;
 

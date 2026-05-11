@@ -3,6 +3,8 @@ services:
     image: postgres:16-alpine
     container_name: shared-shelf-postgres
     restart: unless-stopped
+    ports:
+      - "${DB_PORT}:5432"
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USERNAME}
@@ -14,18 +16,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-
-  api:
-    build: .
-    container_name: shared-shelf-api
-    restart: unless-stopped
-    ports:
-      - "${PORT}:${PORT}"
-    env_file:
-      - .env
-    depends_on:
-      postgres:
-        condition: service_healthy
 
 volumes:
   postgres_data:

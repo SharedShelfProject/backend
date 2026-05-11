@@ -1,11 +1,15 @@
 import {
+    BadRequestException,
     ForbiddenException,
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
-import {Repository} from 'typeorm';
+import {In, Repository} from 'typeorm';
+import {BookStatus, BorrowRequestStatus, LoanStatus} from '../common/enums';
 import {Book} from '../database/entities/book.entity';
+import {BorrowRequest} from '../database/entities/borrow-request.entity';
+import {Loan} from '../database/entities/loan.entity';
 import {User} from '../database/entities/user.entity';
 import {BookDto} from './dto/book.dto';
 import {UpdateBookDto} from "./dto/update-book.dto";
@@ -18,6 +22,10 @@ export class BooksService {
         private readonly bookRepository: Repository<Book>,
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
+        @InjectRepository(BorrowRequest)
+        private readonly borrowRequestRepository: Repository<BorrowRequest>,
+        @InjectRepository(Loan)
+        private readonly loanRepository: Repository<Loan>,
     ) {
     }
 
@@ -67,7 +75,9 @@ export class BooksService {
         if (dto.language !== undefined) book.language = dto.language;
         if (dto.description !== undefined) book.description = dto.description;
         if (dto.condition !== undefined) book.condition = dto.condition;
-        if (dto.status !== undefined) book.status = dto.status;
+        if (dto.status !== undefined) {
+            await this.applyManualStatusChange(book, dto.status);
+        }
 
         await this.bookRepository.save(book);
         return this.toDto(book);
@@ -100,6 +110,40 @@ export class BooksService {
         if (book.owner.id !== userId) {
             throw new ForbiddenException('You do not own this book');
         }
+    }
+
+    private async applyManualStatusChange(book: Book, nextStatus: BookStatus): Promise<void> {
+        const activeLoan = await this.loanRepository.findOne({
+            where: {
+                book: {id: book.id},
+                status: In([LoanStatus.ACTIVE, LoanStatus.OVERDUE]),
+            },
+        });
+
+        if (activeLoan) {
+            throw new BadRequestException('You cannot manually change the status of a borrowed book');
+        }
+
+        const approvedRequestsCount = await this.borrowRequestRepository.count({
+            where: {
+                book: {id: book.id},
+                status: BorrowRequestStatus.APPROVED,
+            },
+        });
+
+        if (nextStatus === BookStatus.BORROWED || nextStatus === BookStatus.QUEUED) {
+            throw new BadRequestException(
+                'Borrowed and queued statuses are managed automatically by the system',
+            );
+        }
+
+        if (approvedRequestsCount > 0 && nextStatus === BookStatus.AVAILABLE) {
+            throw new BadRequestException(
+                'This book has a waiting queue. Resolve the queue before marking it available manually',
+            );
+        }
+
+        book.status = nextStatus;
     }
 
     toDto(book: Book): BookDto {

@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AuthModule } from './auth/auth.module';
+import { BookReviewsModule } from './book-reviews/book-reviews.module';
+import { BorrowingModule } from './borrowing/borrowing.module';
 import { BooksModule } from './books/books.module';
 import { jwtConfig } from './config/jwt.config';
 import { createTypeOrmOptions } from './config/typeorm.config';
@@ -21,6 +23,8 @@ import { UsersModule } from './users/users.module';
     }),
     SharedShelfDatabaseModule,
     AuthModule,
+    BookReviewsModule,
+    BorrowingModule,
     UsersModule,
     BooksModule,
     GroupsModule,

@@ -2,12 +2,12 @@ import { Column, Entity, OneToMany } from 'typeorm';
 
 import { BaseEntity } from './base.entity';
 import { Book } from './book.entity';
+import { BookReview } from './book-review.entity';
 import { BorrowRequest } from './borrow-request.entity';
 import { GroupMembership } from './group-membership.entity';
 import { Group } from './group.entity';
 import { Loan } from './loan.entity';
 import { Notification } from './notification.entity';
-import { ReputationReview } from './reputation-review.entity';
 
 @Entity({ name: 'users' })
 export class User extends BaseEntity {
@@ -32,7 +32,7 @@ export class User extends BaseEntity {
   @Column({ name: 'avatar_url', type: 'varchar', length: 255, nullable: true })
   avatarUrl: string | null;
 
-  @Column({ name: 'reputation_score', type: 'int', default: 0 })
+  @Column({ name: 'reputation_score', type: 'int', default: 100 })
   reputationScore: number;
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
@@ -56,12 +56,9 @@ export class User extends BaseEntity {
   @OneToMany(() => Loan, (loan) => loan.owner)
   ownedLoans: Loan[];
 
+  @OneToMany(() => BookReview, (review) => review.author)
+  bookReviews: BookReview[];
+
   @OneToMany(() => Notification, (notification) => notification.user)
   notifications: Notification[];
-
-  @OneToMany(() => ReputationReview, (review) => review.author)
-  writtenReviews: ReputationReview[];
-
-  @OneToMany(() => ReputationReview, (review) => review.subject)
-  receivedReviews: ReputationReview[];
 }

@@ -21,7 +21,8 @@ import {
 import {CurrentUser} from '../auth/decorators/current-user.decorator';
 import {JwtAuthGuard} from '../auth/guards/jwt-auth.guard';
 import {CreateGroupDto} from './dto/create-group.dto';
-import {JoinGroupDto} from './dto/join-group.dto';
+import {JoinPrivateGroupDto} from './dto/join-private-group.dto';
+import {JoinPublicGroupDto} from './dto/join-public-group.dto';
 import {SearchGroupsDto} from './dto/search-groups.dto';
 import {GroupsService} from './groups.service';
 import {GroupDetailDto} from "./dto/group-detail.dto";
@@ -78,15 +79,28 @@ export class GroupsController {
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({summary: 'Join a group'})
+    @ApiOperation({summary: 'Join a public group'})
     @ApiParam({name: 'id', description: 'Group UUID'})
     @ApiResponse({status: 200, type: GroupDetailDto})
-    joinGroup(
+    joinPublicGroup(
         @Param('id') id: string,
         @CurrentUser() user: { id: string },
-        @Body() dto: JoinGroupDto,
+        @Body() dto: JoinPublicGroupDto,
     ): Promise<GroupDetailDto> {
-        return this.groupsService.joinGroup(id, user.id, dto);
+        return this.groupsService.joinPublicGroup(id, user.id, dto);
+    }
+
+    @Post('join/private')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({summary: 'Join a private group by invite code'})
+    @ApiResponse({status: 200, type: GroupDetailDto})
+    joinPrivateGroup(
+        @CurrentUser() user: { id: string },
+        @Body() dto: JoinPrivateGroupDto,
+    ): Promise<GroupDetailDto> {
+        return this.groupsService.joinPrivateGroup(user.id, dto);
     }
 
     @Delete(':id/leave')

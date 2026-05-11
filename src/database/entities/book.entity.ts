@@ -2,6 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 import { BookStatus } from '../../common/enums';
 import { BaseEntity } from './base.entity';
+import { BookReview } from './book-review.entity';
 import { BorrowRequest } from './borrow-request.entity';
 import { GroupBook } from './group-book.entity';
 import { Loan } from './loan.entity';
@@ -55,4 +56,7 @@ export class Book extends BaseEntity {
 
   @OneToMany(() => Loan, (loan) => loan.book)
   loans: Loan[];
+
+  @OneToMany(() => BookReview, (review) => review.book)
+  reviews: BookReview[];
 }

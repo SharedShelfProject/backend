@@ -77,8 +77,28 @@ export class AuthService {
 
     return {
       accessToken,
-      expiresIn: 900,
+      expiresIn: this.parseExpiresInToSeconds(accessExpiresIn),
       tokenType: 'Bearer',
     };
+  }
+
+  private parseExpiresInToSeconds(
+    expiresIn: `${number}${'s' | 'm' | 'h' | 'd'}`,
+  ): number {
+    const value = Number.parseInt(expiresIn.slice(0, -1), 10);
+    const unit = expiresIn.slice(-1);
+
+    switch (unit) {
+      case 's':
+        return value;
+      case 'm':
+        return value * 60;
+      case 'h':
+        return value * 60 * 60;
+      case 'd':
+        return value * 60 * 60 * 24;
+      default:
+        return value;
+    }
   }
 }

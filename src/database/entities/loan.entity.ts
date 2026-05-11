@@ -3,9 +3,9 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { LoanStatus } from '../../common/enums';
 import { BaseEntity } from './base.entity';
 import { Book } from './book.entity';
+import { BookReview } from './book-review.entity';
 import { Group } from './group.entity';
 import { Notification } from './notification.entity';
-import { ReputationReview } from './reputation-review.entity';
 import { User } from './user.entity';
 
 @Entity({ name: 'loans' })
@@ -48,6 +48,6 @@ export class Loan extends BaseEntity {
   @OneToMany(() => Notification, (notification) => notification.loan)
   notifications: Notification[];
 
-  @OneToMany(() => ReputationReview, (review) => review.loan)
-  reviews: ReputationReview[];
+  @OneToMany(() => BookReview, (review) => review.loan)
+  bookReviews: BookReview[];
 }

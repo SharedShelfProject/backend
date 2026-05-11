@@ -13,9 +13,10 @@ import {Group} from '../database/entities/group.entity';
 import {GroupMembership} from '../database/entities/group-membership.entity';
 import {User} from '../database/entities/user.entity';
 import {CreateGroupDto} from './dto/create-group.dto';
-import {SearchGroupsDto} from './dto/search-groups.dto';
 import {GroupDto} from './dto/group.dto';
-import {JoinGroupDto} from './dto/join-group.dto';
+import {JoinPrivateGroupDto} from './dto/join-private-group.dto';
+import {JoinPublicGroupDto} from './dto/join-public-group.dto';
+import {SearchGroupsDto} from './dto/search-groups.dto';
 import {GroupMemberDto} from "./dto/group-member.dto";
 import {GroupDetailDto} from "./dto/group-detail.dto";
 import {GroupListDto} from "./dto/group-list.dto";
@@ -63,7 +64,7 @@ export class GroupsService {
     }
 
     async searchGroups(dto: SearchGroupsDto): Promise<GroupListDto> {
-        const {query, visibility, page = 1, limit = 20} = dto;
+        const {query, page = 1, limit = 20} = dto;
 
         const qb = this.groupRepository
             .createQueryBuilder('group')
@@ -74,14 +75,13 @@ export class GroupsService {
             })
             .loadRelationCountAndMap('group.memberCount', 'group.memberships', 'ms', (qb) =>
                 qb.where('ms.status = :active', {active: GroupMemberStatus.ACTIVE}),
-            );
+            )
+            .where('group.visibility = :visibility', {
+                visibility: GroupVisibility.OPEN,
+            });
 
         if (query) {
             qb.andWhere([{name: ILike(`%${query}%`)}, {description: ILike(`%${query}%`)}]);
-        }
-
-        if (visibility) {
-            qb.andWhere('group.visibility = :visibility', {visibility});
         }
 
         qb.orderBy('group.createdAt', 'DESC')
@@ -134,7 +134,11 @@ export class GroupsService {
         return detailDto;
     }
 
-    async joinGroup(groupId: string, userId: string, dto: JoinGroupDto): Promise<GroupDetailDto> {
+    async joinPublicGroup(
+        groupId: string,
+        userId: string,
+        _dto: JoinPublicGroupDto,
+    ): Promise<GroupDetailDto> {
         const group = await this.groupRepository.findOne({
             where: {id: groupId},
             relations: ['owner', 'memberships', 'memberships.user'],
@@ -144,6 +148,32 @@ export class GroupsService {
             throw new NotFoundException('Group not found');
         }
 
+        if (group.visibility !== GroupVisibility.OPEN) {
+            throw new BadRequestException('This group cannot be joined without an invite code');
+        }
+
+        return this.completeJoin(group, userId);
+    }
+
+    async joinPrivateGroup(userId: string, dto: JoinPrivateGroupDto): Promise<GroupDetailDto> {
+        const group = await this.groupRepository.findOne({
+            where: {inviteCode: dto.inviteCode},
+            relations: ['owner', 'memberships', 'memberships.user'],
+        });
+
+        if (!group) {
+            throw new BadRequestException('Invalid invite code');
+        }
+
+        if (group.visibility !== GroupVisibility.PRIVATE) {
+            throw new BadRequestException('Invite code is only valid for private groups');
+        }
+
+        return this.completeJoin(group, userId);
+    }
+
+    private async completeJoin(group: Group, userId: string): Promise<GroupDetailDto> {
+
         const existingMembership = group.memberships.find((m) => m.user.id === userId);
 
         if (existingMembership) {
@@ -152,12 +182,6 @@ export class GroupsService {
             }
             if (existingMembership.status === GroupMemberStatus.BLOCKED) {
                 throw new ForbiddenException('You are blocked from this group');
-            }
-        }
-
-        if (group.visibility === GroupVisibility.PRIVATE) {
-            if (!dto.inviteCode || dto.inviteCode !== group.inviteCode) {
-                throw new BadRequestException('Invalid or missing invite code');
             }
         }
 
@@ -180,7 +204,7 @@ export class GroupsService {
         }
 
         const updatedGroup = await this.groupRepository.findOne({
-            where: {id: groupId},
+            where: {id: group.id},
             relations: ['owner', 'memberships', 'memberships.user'],
         });
 

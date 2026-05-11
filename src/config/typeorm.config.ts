@@ -4,12 +4,12 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { DataSource, DataSourceOptions } from 'typeorm';
 
 import { Book } from '../database/entities/book.entity';
+import { BookReview } from '../database/entities/book-review.entity';
 import { Group } from '../database/entities/group.entity';
 import { GroupBook } from '../database/entities/group-book.entity';
 import { GroupMembership } from '../database/entities/group-membership.entity';
 import { Loan } from '../database/entities/loan.entity';
 import { Notification } from '../database/entities/notification.entity';
-import { ReputationReview } from '../database/entities/reputation-review.entity';
 import { User } from '../database/entities/user.entity';
 import { BorrowRequest } from '../database/entities/borrow-request.entity';
 
@@ -18,11 +18,11 @@ const entities = [
   Group,
   GroupMembership,
   Book,
+  BookReview,
   GroupBook,
   BorrowRequest,
   Loan,
   Notification,
-  ReputationReview,
 ];
 
 function createBaseOptions(): TypeOrmModuleOptions & DataSourceOptions {
