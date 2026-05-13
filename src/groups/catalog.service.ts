@@ -1,4 +1,4 @@
-import {
+﻿import {
     ConflictException,
     ForbiddenException,
     Injectable,
@@ -75,8 +75,13 @@ export class CatalogService {
             addedAt: new Date(),
         });
 
-        await this.groupBookRepository.save(entry);
-        return this.toDto(entry, groupId);
+        const savedEntry = await this.groupBookRepository.save(entry);
+        const entryWithRelations = await this.groupBookRepository.findOne({
+            where: {id: savedEntry.id},
+            relations: ['book', 'book.owner'],
+        });
+
+        return this.toDto(entryWithRelations!, groupId);
     }
 
     async updateEntry(
@@ -168,3 +173,4 @@ export class CatalogService {
         };
     }
 }
+

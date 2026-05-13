@@ -1,4 +1,4 @@
-import {
+﻿import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
@@ -58,7 +58,7 @@ export class BookReviewsService {
       loan,
       author: loan.borrower,
       rating: dto.rating,
-      comment: dto.comment ?? null,
+      comment: dto.comment?.trim() || null,
     });
 
     const savedReview = await this.bookReviewRepository.save(review);
@@ -89,7 +89,9 @@ export class BookReviewsService {
       authorUsername: review.author.username,
       rating: review.rating,
       comment: review.comment,
+      returnNotes: review.loan.notes,
       createdAt: review.createdAt,
     };
   }
 }
+

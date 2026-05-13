@@ -8,7 +8,7 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class UsersService {
-  private readonly appUrl = process.env.APP_URL;
+  private readonly appUrl = process.env.APP_URL ?? '';
 
   constructor(
     @InjectRepository(User)

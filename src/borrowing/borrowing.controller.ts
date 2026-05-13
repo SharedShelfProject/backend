@@ -1,4 +1,4 @@
-import {
+﻿import {
   Body,
   Controller,
   Get,
@@ -91,6 +91,15 @@ export class BorrowingController {
     return this.borrowingService.cancelBorrowRequest(requestId, user.id);
   }
 
+  @Get('loans/my')
+  @ApiOperation({ summary: 'List active loans borrowed by current user' })
+  @ApiResponse({ status: 200, type: [LoanDto] })
+  listMyLoans(
+    @CurrentUser() user: { id: string },
+  ): Promise<LoanDto[]> {
+    return this.borrowingService.listMyLoans(user.id);
+  }
+
   @Get('loans')
   @ApiOperation({ summary: 'List all loans in a group' })
   @ApiParam({ name: 'groupId', description: 'Group UUID' })
@@ -115,3 +124,4 @@ export class BorrowingController {
     return this.borrowingService.returnLoan(loanId, user.id, dto);
   }
 }
+

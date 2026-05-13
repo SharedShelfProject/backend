@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+﻿import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { LoanStatus } from '../../common/enums';
 
@@ -8,6 +8,12 @@ export class LoanDto {
 
   @ApiProperty()
   bookId: string;
+
+  @ApiProperty()
+  bookTitle: string;
+
+  @ApiProperty()
+  bookAuthor: string;
 
   @ApiProperty()
   groupId: string;
@@ -39,3 +45,4 @@ export class LoanDto {
   @ApiPropertyOptional({ nullable: true })
   notes: string | null;
 }
+

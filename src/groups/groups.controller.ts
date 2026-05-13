@@ -1,4 +1,4 @@
-import {
+﻿import {
     Body,
     Controller,
     Delete,
@@ -6,6 +6,7 @@ import {
     HttpCode,
     HttpStatus,
     Param,
+    Patch,
     Post,
     Query,
     UseGuards,
@@ -21,6 +22,7 @@ import {
 import {CurrentUser} from '../auth/decorators/current-user.decorator';
 import {JwtAuthGuard} from '../auth/guards/jwt-auth.guard';
 import {CreateGroupDto} from './dto/create-group.dto';
+import {UpdateGroupDto} from './dto/update-group.dto';
 import {JoinPrivateGroupDto} from './dto/join-private-group.dto';
 import {JoinPublicGroupDto} from './dto/join-public-group.dto';
 import {SearchGroupsDto} from './dto/search-groups.dto';
@@ -75,6 +77,20 @@ export class GroupsController {
         return this.groupsService.getGroupById(id, user.id);
     }
 
+    @Patch(':id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiOperation({summary: 'Update group details'})
+    @ApiParam({name: 'id', description: 'Group UUID'})
+    @ApiResponse({status: 200, type: GroupDetailDto})
+    updateGroup(
+        @Param('id') id: string,
+        @CurrentUser() user: { id: string },
+        @Body() dto: UpdateGroupDto,
+    ): Promise<GroupDetailDto> {
+        return this.groupsService.updateGroup(user.id, id, dto);
+    }
+
     @Post(':id/join')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
@@ -116,4 +132,19 @@ export class GroupsController {
     ): Promise<void> {
         return this.groupsService.leaveGroup(id, user.id);
     }
+
+    @Delete(':id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiOperation({summary: 'Delete a group'})
+    @ApiParam({name: 'id', description: 'Group UUID'})
+    @ApiResponse({status: 204})
+    deleteGroup(
+        @Param('id') id: string,
+        @CurrentUser() user: { id: string },
+    ): Promise<void> {
+        return this.groupsService.deleteGroup(id, user.id);
+    }
 }
+

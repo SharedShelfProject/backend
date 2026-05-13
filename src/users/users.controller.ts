@@ -1,5 +1,6 @@
 import {
   Body,
+  BadRequestException,
   Controller,
   Delete,
   Get,
@@ -68,6 +69,10 @@ export class UsersController {
     @CurrentUser() user: { id: string },
     @UploadedFile() file: Express.Multer.File,
   ): Promise<UserProfileDto> {
+    if (!file) {
+      throw new BadRequestException('Avatar file is required');
+    }
+
     return this.usersService.updateAvatar(user.id, file.filename);
   }
 

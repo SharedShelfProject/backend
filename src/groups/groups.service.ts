@@ -1,4 +1,4 @@
-import {
+﻿import {
     BadRequestException,
     ConflictException,
     ForbiddenException,
@@ -11,8 +11,10 @@ import {randomBytes} from 'crypto';
 import {GroupMemberRole, GroupMemberStatus, GroupVisibility} from '../common/enums';
 import {Group} from '../database/entities/group.entity';
 import {GroupMembership} from '../database/entities/group-membership.entity';
+import {Loan} from '../database/entities/loan.entity';
 import {User} from '../database/entities/user.entity';
 import {CreateGroupDto} from './dto/create-group.dto';
+import {UpdateGroupDto} from './dto/update-group.dto';
 import {GroupDto} from './dto/group.dto';
 import {JoinPrivateGroupDto} from './dto/join-private-group.dto';
 import {JoinPublicGroupDto} from './dto/join-public-group.dto';
@@ -134,6 +136,38 @@ export class GroupsService {
         return detailDto;
     }
 
+    async updateGroup(userId: string, groupId: string, dto: UpdateGroupDto): Promise<GroupDetailDto> {
+        const group = await this.groupRepository.findOne({
+            where: {id: groupId},
+            relations: ['owner', 'memberships', 'memberships.user'],
+        });
+
+        if (!group) {
+            throw new NotFoundException('Group not found');
+        }
+
+        if (group.owner.id !== userId) {
+            throw new ForbiddenException('Only the group owner can edit group details');
+        }
+
+        if (dto.name !== undefined) group.name = dto.name;
+        if (dto.description !== undefined) group.description = dto.description || null;
+        if (dto.visibility !== undefined && dto.visibility !== group.visibility) {
+            group.visibility = dto.visibility;
+            group.inviteCode = dto.visibility === GroupVisibility.PRIVATE
+                ? group.inviteCode ?? randomBytes(16).toString('hex')
+                : null;
+        }
+
+        await this.groupRepository.save(group);
+
+        const activeMembers = group.memberships.filter(
+            (m) => m.status === GroupMemberStatus.ACTIVE,
+        );
+
+        return this.toDetailDto(group, activeMembers);
+    }
+
     async joinPublicGroup(
         groupId: string,
         userId: string,
@@ -222,18 +256,64 @@ export class GroupsService {
                 user: {id: userId},
                 status: GroupMemberStatus.ACTIVE,
             },
-            relations: ['group'],
+            relations: ['group', 'group.owner', 'group.memberships'],
         });
 
         if (!membership) {
             throw new NotFoundException('Membership not found');
         }
 
-        if (membership.role === GroupMemberRole.OWNER) {
-            throw new BadRequestException('Group owner cannot leave. Transfer ownership or delete the group.');
+        const activeMembers = membership.group.memberships.filter(
+            (m) => m.status === GroupMemberStatus.ACTIVE,
+        );
+
+        if (membership.role === GroupMemberRole.OWNER && activeMembers.length > 1) {
+            throw new BadRequestException(
+                'Group owner cannot leave while other members remain. Transfer ownership first.',
+            );
+        }
+
+        if (activeMembers.length <= 1) {
+            await this.deleteGroupWithHistory(groupId);
+            return;
         }
 
         await this.membershipRepository.remove(membership);
+    }
+
+    async deleteGroup(groupId: string, userId: string): Promise<void> {
+        const group = await this.groupRepository.findOne({
+            where: {id: groupId},
+            relations: ['owner'],
+        });
+
+        if (!group) {
+            throw new NotFoundException('Group not found');
+        }
+
+        if (group.owner.id !== userId) {
+            throw new ForbiddenException('Only the group owner can delete the group');
+        }
+
+        await this.deleteGroupWithHistory(groupId);
+    }
+
+    private async deleteGroupWithHistory(groupId: string): Promise<void> {
+        await this.groupRepository.manager.transaction(async (manager) => {
+            await manager
+                .createQueryBuilder()
+                .delete()
+                .from(Loan)
+                .where('group_id = :groupId', {groupId})
+                .execute();
+
+            await manager
+                .createQueryBuilder()
+                .delete()
+                .from(Group)
+                .where('id = :groupId', {groupId})
+                .execute();
+        });
     }
 
     async getMyGroups(userId: string): Promise<GroupListDto> {
@@ -301,3 +381,4 @@ export class GroupsService {
         };
     }
 }
+

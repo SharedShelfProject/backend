@@ -8,7 +8,9 @@ import {InjectRepository} from '@nestjs/typeorm';
 import {In, Repository} from 'typeorm';
 import {BookStatus, BorrowRequestStatus, LoanStatus} from '../common/enums';
 import {Book} from '../database/entities/book.entity';
+import {BookReview} from '../database/entities/book-review.entity';
 import {BorrowRequest} from '../database/entities/borrow-request.entity';
+import {GroupBook} from '../database/entities/group-book.entity';
 import {Loan} from '../database/entities/loan.entity';
 import {User} from '../database/entities/user.entity';
 import {BookDto} from './dto/book.dto';
@@ -86,7 +88,54 @@ export class BooksService {
     async deleteBook(userId: string, bookId: string): Promise<void> {
         const book = await this.findBook(bookId);
         this.assertOwner(book, userId);
-        await this.bookRepository.remove(book);
+
+        const activeLoan = await this.loanRepository.findOne({
+            where: {
+                book: {id: bookId},
+                status: In([LoanStatus.ACTIVE, LoanStatus.OVERDUE]),
+            },
+        });
+
+        if (activeLoan) {
+            throw new BadRequestException('You cannot delete a book while it is borrowed');
+        }
+
+        await this.bookRepository.manager.transaction(async (manager) => {
+            await manager
+                .createQueryBuilder()
+                .delete()
+                .from(BookReview)
+                .where('book_id = :bookId', {bookId})
+                .execute();
+
+            await manager
+                .createQueryBuilder()
+                .delete()
+                .from(BorrowRequest)
+                .where('book_id = :bookId', {bookId})
+                .execute();
+
+            await manager
+                .createQueryBuilder()
+                .delete()
+                .from(Loan)
+                .where('book_id = :bookId', {bookId})
+                .execute();
+
+            await manager
+                .createQueryBuilder()
+                .delete()
+                .from(GroupBook)
+                .where('book_id = :bookId', {bookId})
+                .execute();
+
+            await manager
+                .createQueryBuilder()
+                .delete()
+                .from(Book)
+                .where('id = :bookId', {bookId})
+                .execute();
+        });
     }
 
     private async findBook(bookId: string): Promise<Book> {

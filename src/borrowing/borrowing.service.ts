@@ -1,4 +1,4 @@
-import {
+﻿import {
   BadRequestException,
   ForbiddenException,
   Injectable,
@@ -10,7 +10,6 @@ import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import {
   BookStatus,
   BorrowRequestStatus,
-  GroupMemberRole,
   GroupMemberStatus,
   LoanStatus,
 } from '../common/enums';
@@ -282,6 +281,19 @@ export class BorrowingService {
     });
   }
 
+  async listMyLoans(requesterId: string): Promise<LoanDto[]> {
+    const loans = await this.loanRepository.find({
+      where: {
+        borrower: { id: requesterId },
+        status: In([LoanStatus.ACTIVE, LoanStatus.OVERDUE]),
+      },
+      relations: ['book', 'group', 'borrower', 'owner'],
+      order: { dueAt: 'ASC', borrowedAt: 'DESC' },
+    });
+
+    return loans.map((loan) => this.toLoanDto(loan));
+  }
+
   async listLoans(groupId: string, requesterId: string): Promise<LoanDto[]> {
     await this.requireActiveMember(groupId, requesterId);
 
@@ -317,12 +329,9 @@ export class BorrowingService {
       const membership = await this.requireActiveMember(groupId, requesterId, manager);
 
       const isBorrower = loan.borrower.id === requesterId;
-      const isManager =
-        membership.role === GroupMemberRole.OWNER || membership.role === GroupMemberRole.ADMIN;
-      const isOwner = loan.owner.id === requesterId;
 
-      if (!isBorrower && !isManager && !isOwner) {
-        throw new ForbiddenException('You cannot close this loan');
+      if (!isBorrower) {
+        throw new ForbiddenException('Only the borrower can return this loan');
       }
 
       if (![LoanStatus.ACTIVE, LoanStatus.OVERDUE].includes(loan.status)) {
@@ -473,12 +482,11 @@ export class BorrowingService {
     membership: GroupMembership,
     requesterId: string,
   ): void {
-    const isManager =
-      membership.role === GroupMemberRole.OWNER || membership.role === GroupMemberRole.ADMIN;
+    void membership;
     const isBookOwner = entry.book.owner.id === requesterId;
 
-    if (!isManager && !isBookOwner) {
-      throw new ForbiddenException('Only the book owner or group admins can manage the queue');
+    if (!isBookOwner) {
+      throw new ForbiddenException('Only the book owner can manage the queue');
     }
   }
 
@@ -635,6 +643,8 @@ export class BorrowingService {
     return {
       id: loan.id,
       bookId: loan.book.id,
+      bookTitle: loan.book.title,
+      bookAuthor: loan.book.author,
       groupId: loan.group.id,
       borrowerId: loan.borrower.id,
       borrowerUsername: loan.borrower.username,
@@ -688,3 +698,4 @@ export class BorrowingService {
     return Math.max(MIN_REPUTATION_SCORE, Math.min(MAX_REPUTATION_SCORE, score));
   }
 }
+

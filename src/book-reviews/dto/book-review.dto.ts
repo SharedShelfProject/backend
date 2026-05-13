@@ -22,6 +22,9 @@ export class BookReviewDto {
   @ApiPropertyOptional({ nullable: true })
   comment: string | null;
 
+  @ApiPropertyOptional({ nullable: true })
+  returnNotes: string | null;
+
   @ApiProperty()
   createdAt: Date;
 }

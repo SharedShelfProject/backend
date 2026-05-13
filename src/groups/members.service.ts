@@ -1,4 +1,4 @@
-import {
+﻿import {
     BadRequestException,
     ForbiddenException,
     Injectable,
@@ -43,11 +43,8 @@ export class MembersService {
     ): Promise<MembershipDto> {
         const requesterMembership = await this.requireActiveMember(groupId, requesterId);
 
-        if (
-            requesterMembership.role !== GroupMemberRole.OWNER &&
-            requesterMembership.role !== GroupMemberRole.ADMIN
-        ) {
-            throw new ForbiddenException('Only owner or admin can change member roles');
+        if (requesterMembership.role !== GroupMemberRole.OWNER) {
+            throw new ForbiddenException('Only the group owner can change member roles');
         }
 
         const targetMembership = await this.findMembership(groupId, targetUserId);
@@ -56,12 +53,6 @@ export class MembersService {
             throw new ForbiddenException('Cannot change the role of the group owner');
         }
 
-        if (
-            requesterMembership.role === GroupMemberRole.ADMIN &&
-            dto.role === GroupMemberRole.ADMIN
-        ) {
-            throw new ForbiddenException('Admins cannot promote other members to admin');
-        }
 
         targetMembership.role = dto.role;
         await this.membershipRepository.save(targetMembership);
@@ -80,11 +71,8 @@ export class MembersService {
             throw new BadRequestException('Use the leave endpoint to leave a group');
         }
 
-        if (
-            requesterMembership.role !== GroupMemberRole.OWNER &&
-            requesterMembership.role !== GroupMemberRole.ADMIN
-        ) {
-            throw new ForbiddenException('Only owner or admin can remove members');
+        if (requesterMembership.role !== GroupMemberRole.OWNER) {
+            throw new ForbiddenException('Only the group owner can remove members');
         }
 
         const targetMembership = await this.findMembership(groupId, targetUserId);
@@ -93,12 +81,6 @@ export class MembersService {
             throw new ForbiddenException('Cannot remove the group owner');
         }
 
-        if (
-            requesterMembership.role === GroupMemberRole.ADMIN &&
-            targetMembership.role === GroupMemberRole.ADMIN
-        ) {
-            throw new ForbiddenException('Admins cannot remove other admins');
-        }
 
         await this.membershipRepository.remove(targetMembership);
     }
@@ -110,11 +92,8 @@ export class MembersService {
     ): Promise<MembershipDto> {
         const requesterMembership = await this.requireActiveMember(groupId, requesterId);
 
-        if (
-            requesterMembership.role !== GroupMemberRole.OWNER &&
-            requesterMembership.role !== GroupMemberRole.ADMIN
-        ) {
-            throw new ForbiddenException('Only owner or admin can block members');
+        if (requesterMembership.role !== GroupMemberRole.OWNER) {
+            throw new ForbiddenException('Only the group owner can block members');
         }
 
         if (targetUserId === requesterId) {
@@ -127,12 +106,6 @@ export class MembersService {
             throw new ForbiddenException('Cannot block the group owner');
         }
 
-        if (
-            requesterMembership.role === GroupMemberRole.ADMIN &&
-            targetMembership.role === GroupMemberRole.ADMIN
-        ) {
-            throw new ForbiddenException('Admins cannot block other admins');
-        }
 
         targetMembership.status = GroupMemberStatus.BLOCKED;
         await this.membershipRepository.save(targetMembership);
@@ -147,11 +120,8 @@ export class MembersService {
     ): Promise<MembershipDto> {
         const requesterMembership = await this.requireActiveMember(groupId, requesterId);
 
-        if (
-            requesterMembership.role !== GroupMemberRole.OWNER &&
-            requesterMembership.role !== GroupMemberRole.ADMIN
-        ) {
-            throw new ForbiddenException('Only owner or admin can unblock members');
+        if (requesterMembership.role !== GroupMemberRole.OWNER) {
+            throw new ForbiddenException('Only the group owner can unblock members');
         }
 
         const targetMembership = await this.membershipRepository.findOne({
@@ -259,3 +229,4 @@ export class MembersService {
         };
     }
 }
+
