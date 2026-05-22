@@ -10,6 +10,7 @@ import { jwtConfig } from './config/jwt.config';
 import { createTypeOrmOptions } from './config/typeorm.config';
 import { SharedShelfDatabaseModule } from './database/shared-shelf-database.module';
 import { GroupsModule } from './groups/groups.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -28,6 +29,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     BooksModule,
     GroupsModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

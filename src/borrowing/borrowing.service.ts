@@ -326,7 +326,6 @@ export class BorrowingService {
       }
 
       const groupId = loan.group.id;
-      const membership = await this.requireActiveMember(groupId, requesterId, manager);
 
       const isBorrower = loan.borrower.id === requesterId;
 
@@ -423,26 +422,6 @@ export class BorrowingService {
     }
 
     return membership;
-  }
-
-  private async findEntry(
-    groupId: string,
-    entryId: string,
-    manager?: EntityManager,
-  ): Promise<GroupBook> {
-    const entry = await (manager ?? this.dataSource.manager).getRepository(GroupBook).findOne({
-      where: {
-        id: entryId,
-        group: { id: groupId },
-      },
-      relations: ['group', 'book', 'book.owner'],
-    });
-
-    if (!entry) {
-      throw new NotFoundException('Catalog entry not found');
-    }
-
-    return entry;
   }
 
   private async findEntryById(
@@ -698,4 +677,3 @@ export class BorrowingService {
     return Math.max(MIN_REPUTATION_SCORE, Math.min(MAX_REPUTATION_SCORE, score));
   }
 }
-
