@@ -7,6 +7,7 @@ import { BorrowRequest } from '../database/entities/borrow-request.entity';
 import { GroupBook } from '../database/entities/group-book.entity';
 import { GroupMembership } from '../database/entities/group-membership.entity';
 import { Loan } from '../database/entities/loan.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { BorrowingController } from './borrowing.controller';
 import { BorrowingService } from './borrowing.service';
 
@@ -14,6 +15,7 @@ import { BorrowingService } from './borrowing.service';
   imports: [
     TypeOrmModule.forFeature([Book, GroupBook, GroupMembership, BorrowRequest, Loan]),
     AuthModule,
+    NotificationsModule,
   ],
   controllers: [BorrowingController],
   providers: [BorrowingService],

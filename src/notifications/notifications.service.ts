@@ -1,10 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { EntityManager, In, Repository } from 'typeorm';
 
 import { LoanStatus, NotificationType } from '../common/enums';
+import { Book } from '../database/entities/book.entity';
+import { BorrowRequest } from '../database/entities/borrow-request.entity';
 import { Loan } from '../database/entities/loan.entity';
 import { Notification } from '../database/entities/notification.entity';
+import { User } from '../database/entities/user.entity';
 
 const DEFAULT_REMINDER_HOURS_BEFORE_DUE = 24;
 const DEFAULT_SCAN_INTERVAL_MS = 5 * 60 * 1000;
@@ -161,5 +164,86 @@ export class NotificationsService {
       { user: { id: userId }, isRead: false },
       { isRead: true },
     );
+  }
+
+  async createBorrowRequestCreatedNotification(
+    owner: User,
+    requester: User,
+    book: Book,
+    manager?: EntityManager,
+  ): Promise<void> {
+    await this.createUserNotification({
+      user: owner,
+      type: NotificationType.REQUEST_CREATED,
+      title: 'Borrow request created',
+      body: `${requester.username} requested "${book.title}".`,
+      manager,
+    });
+  }
+
+  async createBorrowRequestApprovedNotification(
+    request: BorrowRequest,
+    loan: Loan | null,
+    manager?: EntityManager,
+  ): Promise<void> {
+    await this.createUserNotification({
+      user: request.requester,
+      loan,
+      type: NotificationType.REQUEST_APPROVED,
+      title: 'Borrow request approved',
+      body: `Your request for "${request.book.title}" was approved.`,
+      scheduledFor: request.approvedDueAt,
+      manager,
+    });
+  }
+
+  async createBorrowRequestRejectedNotification(
+    request: BorrowRequest,
+    manager?: EntityManager,
+  ): Promise<void> {
+    await this.createUserNotification({
+      user: request.requester,
+      type: NotificationType.REQUEST_REJECTED,
+      title: 'Borrow request rejected',
+      body: `Your request for "${request.book.title}" was rejected.`,
+      manager,
+    });
+  }
+
+  async createBookReturnedNotification(loan: Loan, manager?: EntityManager): Promise<void> {
+    await this.createUserNotification({
+      user: loan.owner,
+      loan,
+      type: NotificationType.BOOK_RETURNED,
+      title: 'Book returned',
+      body: `${loan.borrower.username} returned "${loan.book.title}".`,
+      sentAt: loan.returnedAt ?? new Date(),
+      manager,
+    });
+  }
+
+  private async createUserNotification(options: {
+    user: User;
+    loan?: Loan | null;
+    type: NotificationType;
+    title: string;
+    body: string;
+    scheduledFor?: Date | null;
+    sentAt?: Date | null;
+    manager?: EntityManager;
+  }): Promise<void> {
+    const repository = options.manager?.getRepository(Notification) ?? this.notificationRepository;
+    const notification = repository.create({
+      user: { id: options.user.id } as User,
+      loan: options.loan ? ({ id: options.loan.id } as Loan) : null,
+      type: options.type,
+      title: options.title,
+      body: options.body,
+      isRead: false,
+      scheduledFor: options.scheduledFor ?? null,
+      sentAt: options.sentAt ?? new Date(),
+    });
+
+    await repository.save(notification);
   }
 }

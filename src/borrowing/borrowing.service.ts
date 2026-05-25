@@ -19,6 +19,7 @@ import { GroupBook } from '../database/entities/group-book.entity';
 import { GroupMembership } from '../database/entities/group-membership.entity';
 import { Loan } from '../database/entities/loan.entity';
 import { User } from '../database/entities/user.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 import { ApproveBorrowRequestDto } from './dto/approve-borrow-request.dto';
 import { ApproveBorrowRequestResultDto } from './dto/approve-borrow-request-result.dto';
 import { BorrowRequestDto } from './dto/borrow-request.dto';
@@ -44,6 +45,7 @@ export class BorrowingService {
     private readonly borrowRequestRepository: Repository<BorrowRequest>,
     @InjectRepository(Loan)
     private readonly loanRepository: Repository<Loan>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async createBorrowRequest(
@@ -100,8 +102,15 @@ export class BorrowingService {
 
       const requestWithRelations = await manager.getRepository(BorrowRequest).findOne({
         where: { id: savedRequest.id },
-        relations: ['requester', 'book', 'groupBook'],
+        relations: ['requester', 'book', 'book.owner', 'groupBook'],
       });
+
+      await this.notificationsService.createBorrowRequestCreatedNotification(
+        entry.book.owner,
+        requestWithRelations!.requester,
+        entry.book,
+        manager,
+      );
 
       return this.toBorrowRequestDto(requestWithRelations!);
     });
@@ -227,6 +236,12 @@ export class BorrowingService {
         relations: ['requester', 'book', 'groupBook'],
       });
 
+      await this.notificationsService.createBorrowRequestApprovedNotification(
+        requestWithRelations!,
+        loan,
+        manager,
+      );
+
       return {
         request: this.toBorrowRequestDto(requestWithRelations!),
         loan: loan ? this.toLoanDto(loan) : null,
@@ -349,6 +364,8 @@ export class BorrowingService {
       const nextLoan = await this.activateNextApprovedRequest(loan.book.id, groupId, manager);
       await this.syncBookStatus(loan.book.id, manager);
 
+      await this.notificationsService.createBookReturnedNotification(loan, manager);
+
       return {
         returnedLoan: this.toLoanDto(loan),
         nextLoan: nextLoan ? this.toLoanDto(nextLoan) : null,
@@ -396,6 +413,8 @@ export class BorrowingService {
 
       await this.reindexApprovedRequests(request.groupBook.id, manager);
       await this.syncBookStatus(request.book.id, manager);
+
+      await this.notificationsService.createBorrowRequestRejectedNotification(request, manager);
 
       return this.toBorrowRequestDto(request);
     });
