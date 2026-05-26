@@ -17,5 +17,27 @@ services:
       timeout: 5s
       retries: 10
 
+  app:
+    build: .
+    container_name: shared-shelf-app
+    restart: unless-stopped
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN}
+      PORT: ${PORT}
+      APP_URL: ${APP_URL}
+      NOTIFICATIONS_SCAN_INTERVAL_MS: ${NOTIFICATIONS_SCAN_INTERVAL_MS}
+      LOAN_REMINDER_HOURS_BEFORE_DUE: ${LOAN_REMINDER_HOURS_BEFORE_DUE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
