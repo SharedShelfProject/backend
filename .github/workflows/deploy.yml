@@ -20,9 +20,7 @@ jobs:
           script: |
             cd ${{ secrets.APP_DIR }}
             git pull origin main
-            cat > .env << 'ENVEOF'
-            ${{ secrets.ENV_FILE }}
-            ENVEOF
+            printf '%s' '${{ secrets.ENV_FILE }}' > .env
             docker compose down
             docker compose up --build -d
             docker image prune -f
